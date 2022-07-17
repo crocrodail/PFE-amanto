@@ -13,8 +13,8 @@ class Chat {
         setInterval(() => {
             for (const message of this.messages) {
                 if (message.entity){
-                    message.entity.y = message.entity.y - 10;
-                    message.y = message.y - 10;
+                    message.entity.y = message.entity.y - 20;
+                    message.y = message.y - 20;
                     if (message.entity.y < -100) {
                         message.entity.destroy();
                         const index = this.messages.indexOf(message);
@@ -27,6 +27,9 @@ class Chat {
 
         this.input = document.querySelector('.chat');
         this.input.addEventListener('keydown', (e) => {
+            if (e.keyCode === 32) {
+                this.input.value = this.input.value + ' ';
+            }
             if (e.keyCode === 13) {
                 this.sendMessage(this.input.value);
                 this.input.value = '';

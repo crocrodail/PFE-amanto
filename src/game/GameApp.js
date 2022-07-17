@@ -62,7 +62,12 @@ function CreateGame() {
             update: update,
         },
     };
-    const socket = io('wss://' + process.env.REACT_APP_API_URL);
+    let socket
+    if (process.env.REACT_APP_ENV !== "production") {
+        socket = io('ws://' + process.env.REACT_APP_API_URL);
+    } else {
+        socket = io('wss://' + process.env.REACT_APP_API_URL);
+    }
     const game = new Phaser.Game(config);
     let cursors;
     let player;
