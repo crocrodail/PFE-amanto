@@ -9,9 +9,10 @@ module.exports = (io) => {
     console.log(`Connecté au client ${socket.id}`)
     
     socket.on('disconnect', () => players.disconnect(socket))
-    socket.on('connected', (data) => players.connect(io, socket, data))
+    socket.on('connected', (data) => players.connect(socket, data))
     socket.on('move', (data) => players.move(socket, data))
     socket.on('chat', (data) => players.chat(io, data))
+    socket.on('changeRoom', (data) => players.switchRoom(socket, data))
 
   })
 

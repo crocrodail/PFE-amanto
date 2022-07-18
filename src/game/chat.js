@@ -1,10 +1,11 @@
 class Chat {
     messages = [];
 
-    constructor(socket, game, player) {
+    constructor(socket, game, player, room) {
         this.socket = socket;
         this.game = game;
         this.player = player;
+        this.room = room;
         this.style = { fontFamily: 'Verdana', color: '#fff', fontSize: 12, backgroundColor: '#000', padding: { x: 10, y: 3 } }
         this.init();
     }
@@ -54,7 +55,7 @@ class Chat {
     }
 
     sendMessage(message) {
-        const msg = {pseudo: this.player.pseudo, text: message, x: this.player.x, y: this.player.y - 40};
+        const msg = { pseudo: this.player.info.pseudo, text: message, x: this.player.x, y: this.player.y - 40, room: this.room };
         this.socket.emit('chat', msg);
     }
 

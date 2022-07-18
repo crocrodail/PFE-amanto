@@ -52,8 +52,9 @@ import "swiper/css/navigation";
 
 class CreateGame {
 
-    constructor() {
+    constructor(dataUser) {
         let globalGame = this
+        this.room = 'main'
         const config = {
             type: Phaser.AUTO,
             width: window.screen.availWidth,
@@ -79,9 +80,7 @@ class CreateGame {
         }
         const game = new Phaser.Game(config);
         let cursors;
-        let player;
-        let playerOnline;
-        let playerOnlineSprite = {};
+        this.playerOnlineSprite = {};
         let updateOnline = false;
 
         function preload() {
@@ -100,7 +99,18 @@ class CreateGame {
                 .on('pointerdown', function () {
                     const profil = document.querySelector('.show-profile');
                     profil.style.display = 'block';
+                    document.querySelector('.show-profile h1').innerHTML = `${globalGame.player.info.name} - ${globalGame.player.info.age} ans`;
+                    document.querySelector('.show-profile .city').innerHTML = globalGame.player.info.city;
+                    document.querySelectorAll('.show-profile img').forEach((e) => {
+                        e.src = globalGame.player.info.picture;
+                    })
                 });
+            globalGame.player.info = {}
+            globalGame.player.info.pseudo = dataUser.login.username;
+            globalGame.player.info.name = dataUser.name.first;
+            globalGame.player.info.age = dataUser.dob.age;
+            globalGame.player.info.picture = dataUser.picture.large;
+            globalGame.player.info.city = dataUser.location.city;
             const collider = this.physics.add.collider(globalGame.player, globalGame.map.collides);
             globalGame.collider = collider;
             globalGame.map.collides.setCollisionBetween(3284, 3286);
@@ -158,22 +168,22 @@ class CreateGame {
 
             cursors = this.input.keyboard.createCursorKeys();
 
-            let initChat = new Chat(globalGame.socket, this, globalGame.player);
+            let initChat = new Chat(globalGame.socket, this, globalGame.player, globalGame.room);
 
             globalGame.socket.on('updateMoves', (data) => {
-                playerOnline = data;
+                globalGame.playerOnline = data;
                 updateOnline = true;
             });
             globalGame.socket.on('disconect', (data) => {
-                playerOnline = data.Players;
-                if (playerOnlineSprite[data.socket]) {
-                    playerOnlineSprite[data.socket].sprite.destroy();
-                    delete playerOnlineSprite[data.socket];
+                globalGame.playerOnline = data.Players;
+                if (globalGame.playerOnlineSprite[data.socket]) {
+                    globalGame.playerOnlineSprite[data.socket].sprite.destroy();
+                    delete globalGame.playerOnlineSprite[data.socket];
                 }
                 updateOnline = true;
             });
 
-            globalGame.socket.emit('connected', { x: spawnPoint.x, y: spawnPoint.y, velocity: globalGame.player.body.velocity });
+            globalGame.socket.emit('connected', { x: spawnPoint.x, y: spawnPoint.y, velocity: globalGame.player.body.velocity, room: globalGame.room, info: globalGame.player.info });
 
         }
 
@@ -195,57 +205,65 @@ class CreateGame {
                         prevVelocity: prevVelocity,
                         velocity: globalGame.player.body.velocity,
                         cursors: { up: cursors.up.isDown, down: cursors.down.isDown, left: cursors.left.isDown, right: cursors.right.isDown },
+                        room: globalGame.room,
+                        info: globalGame.player.info
                     });
             }
 
-            if (updateOnline && playerOnline) {
-                for (const [key] of Object.entries(playerOnline)) {
-                    if (key != globalGame.socket.id) {
-                        if (playerOnlineSprite[key] == undefined) {
-                            playerOnlineSprite[key] = {}
-                            playerOnlineSprite[key].sprite = this.physics.add
-                                .sprite(playerOnline[key].x, playerOnline[key].y, "atlas", "misa-front")
+            if (updateOnline && globalGame.playerOnline) {
+                for (const [key] of Object.entries(globalGame.playerOnline)) {
+                    if (key != globalGame.socket.id && globalGame.playerOnline[key].room == globalGame.room) {
+                        if (globalGame.playerOnlineSprite[key] == undefined) {
+                            globalGame.playerOnlineSprite[key] = {}
+                            globalGame.playerOnlineSprite[key].sprite = this.physics.add
+                                .sprite(globalGame.playerOnline[key].x, globalGame.playerOnline[key].y, "atlas", "misa-front")
                                 .setSize(30, 40)
                                 .setOffset(0, 24)
                                 .setInteractive({ cursor: 'pointer' })
+                                .setDepth(globalGame.player.depth)
                                 .on('pointerdown', function () {
                                     const profil = document.querySelector('.show-profile');
                                     profil.style.display = 'block';
+                                    document.querySelector('.show-profile h1').innerHTML = `${globalGame.playerOnline[key].info.name} - ${globalGame.playerOnline[key].info.age} ans`;
+                                    document.querySelector('.show-profile .city').innerHTML = globalGame.playerOnline[key].info.city;
+                                    document.querySelectorAll('.show-profile img').forEach((e) => {
+                                        e.src = globalGame.playerOnline[key].info.picture;
+                                    })
                                 });
 
                         }
-                        playerOnlineSprite[key].sprite.x = playerOnline[key].x;
-                        playerOnlineSprite[key].sprite.y = playerOnline[key].y;
-                        if (playerOnline[key].cursors?.up && !O_up) {
+                        globalGame.playerOnlineSprite[key].sprite.x = globalGame.playerOnline[key].x;
+                        globalGame.playerOnlineSprite[key].sprite.y = globalGame.playerOnline[key].y;
+                        if (globalGame.playerOnline[key].cursors?.up && !O_up) {
                             O_up = true;
-                            playerOnlineSprite[key].sprite.anims.stop();
-                            playerOnlineSprite[key].sprite.anims.play("misa-back-walk", true);
-                        } else if (playerOnline[key].cursors?.down && !O_down) {
+                            globalGame.playerOnlineSprite[key].sprite.anims.stop();
+                            globalGame.playerOnlineSprite[key].sprite.anims.play("misa-back-walk", true);
+                        } else if (globalGame.playerOnline[key].cursors?.down && !O_down) {
                             O_down = true;
-                            playerOnlineSprite[key].sprite.anims.stop();
-                            playerOnlineSprite[key].sprite.anims.play("misa-front-walk", true);
-                        } else if (playerOnline[key].cursors?.left && !O_left) {
+                            globalGame.playerOnlineSprite[key].sprite.anims.stop();
+                            globalGame.playerOnlineSprite[key].sprite.anims.play("misa-front-walk", true);
+                        } else if (globalGame.playerOnline[key].cursors?.left && !O_left) {
                             O_left = true;
-                            playerOnlineSprite[key].sprite.anims.stop();
-                            playerOnlineSprite[key].sprite.anims.play("misa-left-walk", true);
-                        } else if (playerOnline[key].cursors?.right && !O_right) {
+                            globalGame.playerOnlineSprite[key].sprite.anims.stop();
+                            globalGame.playerOnlineSprite[key].sprite.anims.play("misa-left-walk", true);
+                        } else if (globalGame.playerOnline[key].cursors?.right && !O_right) {
                             O_right = true;
-                            playerOnlineSprite[key].sprite.anims.stop();
-                            playerOnlineSprite[key].sprite.anims.play("misa-right-walk", true);
-                        } else if (!playerOnline[key].cursors?.up && !playerOnline[key].cursors?.down && !playerOnline[key].cursors?.left && !playerOnline[key].cursors?.right) {
+                            globalGame.playerOnlineSprite[key].sprite.anims.stop();
+                            globalGame.playerOnlineSprite[key].sprite.anims.play("misa-right-walk", true);
+                        } else if (!globalGame.playerOnline[key].cursors?.up && !globalGame.playerOnline[key].cursors?.down && !globalGame.playerOnline[key].cursors?.left && !globalGame.playerOnline[key].cursors?.right) {
                             O_up = false;
                             O_down = false
                             O_left = false
                             O_right = false
-                            playerOnlineSprite[key].sprite.anims.stop();
-                            if (playerOnline[key].velocity?.x < 0) {
-                                playerOnlineSprite[key].sprite.setTexture("atlas", "misa-left");
-                            } else if (playerOnline[key].velocity.x > 0) {
-                                playerOnlineSprite[key].sprite.setTexture("atlas", "misa-right");
-                            } else if (playerOnline[key].velocity.y < 0) {
-                                playerOnlineSprite[key].sprite.setTexture("atlas", "misa-back");
-                            } else if (playerOnline[key].velocity.y > 0) {
-                                playerOnlineSprite[key].sprite.setTexture("atlas", "misa-front");
+                            globalGame.playerOnlineSprite[key].sprite.anims.stop();
+                            if (globalGame.playerOnline[key].velocity?.x < 0) {
+                                globalGame.playerOnlineSprite[key].sprite.setTexture("atlas", "misa-left");
+                            } else if (globalGame.playerOnline[key].velocity.x > 0) {
+                                globalGame.playerOnlineSprite[key].sprite.setTexture("atlas", "misa-right");
+                            } else if (globalGame.playerOnline[key].velocity.y < 0) {
+                                globalGame.playerOnlineSprite[key].sprite.setTexture("atlas", "misa-back");
+                            } else if (globalGame.playerOnline[key].velocity.y > 0) {
+                                globalGame.playerOnlineSprite[key].sprite.setTexture("atlas", "misa-front");
                             }
                         }
                     }
@@ -295,7 +313,7 @@ class CreateGame {
     }
 
     changeMap(map) {
-        const data = this.map.change(map, this.player, this.collider);
+        const data = this.map.change(map, this);
         this.player = data.player;
         this.collider = data.collider;
     }
@@ -310,8 +328,21 @@ export default function GameApp() {
     const [menuId, setMenuId] = React.useState(1);
     const [game, setGame] = React.useState(null);
     React.useEffect(() => {
-        const myGame = new CreateGame();
-        setGame(myGame);
+        fetch('https://randomuser.me/api/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log(data);
+            const player = data.results[0];
+            const myGame = new CreateGame(player);
+            setGame(myGame)
+        }).catch(err => {
+            console.log(err);
+        })
 
     }, []);
     const handleMap = (map) => {
@@ -475,7 +506,7 @@ export default function GameApp() {
                     <ul>
                         <li>
                             <ImLocation />
-                            <span>
+                            <span className="city">
                                 Paris
                             </span>
                         </li>

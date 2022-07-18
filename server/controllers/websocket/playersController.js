@@ -1,16 +1,19 @@
+const e = require("express")
+
 let Players = {}
 
 const move = async (socket, data) => {
 
     Players[socket.id] = data
-    socket.broadcast.emit('updateMoves', Players)
+    socket.to(data.room).emit('updateMoves', Players)
 
 }
 
-const connect = async (io, socket, data) => {
+const connect = async (socket, data) => {
 
+    socket.join(data.room)
     Players[socket.id] = data
-    io.emit('updateMoves', Players)
+    socket.to(data.room).emit('updateMoves', Players)
 
 }
 
@@ -22,9 +25,19 @@ const disconnect = async (socket) => {
 
 }
 
-const chat = async (io, data) => {
+const chat = async (socket, data) => {
 
-    io.emit('chat', data)
+    socket.to(data.room).emit('chat', data)
+
+}
+
+const switchRoom = async (socket, data) => {
+
+    socket.leave(data.oldRoom)
+    socket.join(data.newRoom)
+    Players[socket.id].room = data.newRoom
+    socket.to(data.oldRoom).emit('disconect', { Players, socket: socket.id })
+    socket.to(data.newRoom).emit('updateMoves', Players)
 
 }
 
@@ -32,5 +45,6 @@ module.exports = {
     move,
     disconnect,
     connect,
-    chat
+    chat,
+    switchRoom
 }

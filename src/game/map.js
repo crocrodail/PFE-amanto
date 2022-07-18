@@ -61,19 +61,33 @@ class Map {
 
     }
 
-    change(map, player, collides) {
+    change(map, game) {
         this.newMap = this.created.make.tilemap({ key: map });
         this.loadAssets(this.newMap);
         const spawnPoint = this.newMap.findObject("Objects", (obj) => obj.name === "Spawn Point");
-        player.x = spawnPoint.x;
-        player.y = spawnPoint.y;
-        player.depth = player.depth + 1;
-        this.newCollides = this.created.physics.add.collider(player, this.collides);
+        game.player.x = spawnPoint.x;
+        game.player.y = spawnPoint.y;
+        game.player.depth = game.player.depth + 1;
+        this.newCollides = this.created.physics.add.collider(game.player, this.collides);
         this.collides.setCollisionBetween(3284, 3286);
-        collides.destroy();
+        game.collider.destroy();
         this.map.destroy();
         this.map = this.newMap;
-        return { map: this.map, collider: this.newCollides, player: player};
+        if (game.onlinePlayer) {
+            for (const [key] of Object.entries(game.onlinePlayer)) {
+                if (key != game.socket.id) {
+                    game.onlinePlayer[key].depth = game.player.depth;
+                }
+            }
+        }
+        if (map === "map1") {
+            game.socket.emit("changeRoom", { oldRoom: game.room, newRoom: "main" });
+            game.room = "main"
+        } else if (map === "private") {
+            game.socket.emit("changeRoom", { oldRoom: game.room, newRoom: game.player.info.pseudo });
+            game.room = game.player.pseudo
+        }
+        return { map: this.map, collider: this.newCollides, player: game.player};
     }
 }
 
