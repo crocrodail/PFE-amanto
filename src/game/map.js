@@ -85,9 +85,10 @@ class Map {
             game.room = "main"
         } else if (map === "private") {
             game.socket.emit("changeRoom", { oldRoom: game.room, newRoom: game.player.info.pseudo });
-            game.room = game.player.pseudo
+            game.room = game.player.info.pseudo
         }
-        return { map: this.map, collider: this.newCollides, player: game.player};
+        console.log(game.room)
+        return { map: this.map, collider: this.newCollides, player: game.player, room: game.room};
     }
 }
 

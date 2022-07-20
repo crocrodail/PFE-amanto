@@ -4,6 +4,7 @@ import { io, Socket } from "socket.io-client";
 import Chat from "./chat";
 import Map from "./map";
 import Preload from "./preload";
+import HomeImg from "./Home-2-512.webp";
 import {
     AiOutlineClose,
 } from 'react-icons/ai';
@@ -168,7 +169,7 @@ class CreateGame {
 
             cursors = this.input.keyboard.createCursorKeys();
 
-            let initChat = new Chat(globalGame.socket, this, globalGame.player, globalGame.room);
+            globalGame.Chat = new Chat(globalGame.socket, this, globalGame.player, globalGame.room);
 
             globalGame.socket.on('updateMoves', (data) => {
                 globalGame.playerOnline = data;
@@ -316,6 +317,8 @@ class CreateGame {
         const data = this.map.change(map, this);
         this.player = data.player;
         this.collider = data.collider;
+        console.log(data.room)
+        this.Chat.updateRoom(data.room);
     }
 }
 
@@ -353,8 +356,8 @@ export default function GameApp() {
             <div className="App" id="game-container"></div>
             <input className="chat" type="text" placeholder="Parler ..." />
             <div className="navigation">
-                <button onClick={() => setOpenModal(true)}>
-                    Open modal
+                <button className="mainMenu" onClick={() => setOpenModal(true)}>
+                    <img src={HomeImg} alt="Home" />
                 </button>
                 <ReactModal
                     initWidth={800}

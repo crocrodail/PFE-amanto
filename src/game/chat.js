@@ -55,8 +55,13 @@ class Chat {
     }
 
     sendMessage(message) {
+        console.log(this.room);
         const msg = { pseudo: this.player.info.pseudo, text: message, x: this.player.x, y: this.player.y - 40, room: this.room };
         this.socket.emit('chat', msg);
+    }
+
+    updateRoom(room) {
+        this.room = room;
     }
 
 }
