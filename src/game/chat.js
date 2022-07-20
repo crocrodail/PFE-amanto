@@ -62,6 +62,13 @@ class Chat {
 
     updateRoom(room) {
         this.room = room;
+        for (const message of this.messages) {
+            if (message.entity) {
+                message.entity.destroy();
+                const index = this.messages.indexOf(message);
+                this.messages.splice(index, 1);
+            }
+        }
     }
 
 }
